@@ -1,21 +1,19 @@
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
+import "dotenv/config";
+import app from "./app";
+import { connectDB } from "./config/db";
 
-const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
-app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173' }));
-app.use(express.json());
-app.use(morgan('dev'));
+async function start() {
+  try {
+    await connectDB(process.env.MONGODB_URI as string);
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+}
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
-});
+start();
