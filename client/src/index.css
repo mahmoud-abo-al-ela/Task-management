@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-surface: oklch(100% 0 0);
+  --color-surface-muted: oklch(97% 0.005 260);
+  --color-border: oklch(91% 0.008 260);
+  --color-fg: oklch(22% 0.02 260);
+  --color-fg-muted: oklch(53% 0.02 260);
+
+  --color-brand: oklch(58% 0.17 264);
+  --color-brand-hover: oklch(52% 0.17 264);
+
+  --color-danger: oklch(58% 0.19 25);
+  --color-warning: oklch(72% 0.15 70);
+  --color-success: oklch(62% 0.14 155);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface-muted text-fg antialiased;
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand;
+  }
+}
