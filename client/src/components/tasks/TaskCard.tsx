@@ -39,13 +39,15 @@ export default function TaskCard({
       <CardContent className="flex items-start justify-between gap-4 p-4">
         <div className="min-w-0 space-y-2">
           <h3
-            className={`font-medium ${isDone ? "text-muted-foreground line-through" : ""}`}
+            className={`wrap-break-word font-medium ${isDone ? "text-muted-foreground line-through" : ""}`}
           >
             {task.title}
           </h3>
 
           {task.description && (
-            <p className="text-sm text-muted-foreground">{task.description}</p>
+            <p className="line-clamp-2 text-sm wrap-break-word text-muted-foreground">
+              {task.description}
+            </p>
           )}
 
           <div className="flex flex-wrap items-center gap-2">

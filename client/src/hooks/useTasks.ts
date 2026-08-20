@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api, { getErrorMessage } from "@/lib/api";
-import type { Task } from "@/types";
+import type { Task, TaskStatus } from "@/types";
 
 export interface TaskFilters {
   search: string;
@@ -48,6 +48,38 @@ export function useUpdateTask() {
       toast.success("Task updated");
     },
     onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+export function useMoveTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: TaskStatus }) =>
+      api.patch(`/tasks/${id}`, { status }),
+
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+
+      const previous = queryClient.getQueriesData<Task[]>({
+        queryKey: ["tasks"],
+      });
+
+      queryClient.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (tasks) =>
+        tasks?.map((task) => (task._id === id ? { ...task, status } : task)),
+      );
+
+      return { previous };
+    },
+
+    onError: (error, _variables, context) => {
+      context?.previous.forEach(([key, tasks]) =>
+        queryClient.setQueryData(key, tasks),
+      );
+      toast.error(getErrorMessage(error));
+    },
+
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }
 

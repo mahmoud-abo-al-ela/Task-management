@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
-import { ListChecks, LogOut, Plus } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { Plus } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
+import Navbar from "@/components/layout/Navbar";
 import TaskList from "@/components/tasks/TaskList";
 import TaskFilters from "@/components/tasks/TaskFilters";
+import TaskBoard from "@/components/tasks/TaskBoard";
+import ViewToggle, { type TaskView } from "@/components/tasks/ViewToggle";
 import TaskFormDialog from "@/components/tasks/TaskFormDialog";
 import DeleteTaskDialog from "@/components/tasks/DeleteTaskDialog";
 import { Button } from "@/components/ui/button";
 import type { Task } from "@/types";
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
 
-  // Only the debounced value reaches the query, so typing does not send a
-  // request per keystroke.
   const [debouncedSearch] = useDebounce(search, 300);
+
+  const [view, setView] = useState<TaskView>("list");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -52,38 +52,27 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
-          <div className="flex items-center gap-2 font-semibold">
-            <ListChecks size={20} />
-            <span>Task Manager</span>
-          </div>
+      <Navbar />
 
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {user?.name}
-            </span>
-            <Button variant="outline" size="sm" onClick={logout}>
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Log out</span>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <main className="mx-auto max-w-5xl px-4 py-6">
         <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">My Tasks</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+              My Tasks
+            </h1>
+            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
               Everything you are working on, in one place.
             </p>
           </div>
 
-          <Button onClick={openCreateForm}>
-            <Plus size={16} />
-            <span className="hidden sm:inline">New task</span>
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <ViewToggle view={view} onChange={setView} />
+
+            <Button onClick={openCreateForm} aria-label="New task">
+              <Plus size={16} />
+              <span className="hidden sm:inline">New task</span>
+            </Button>
+          </div>
         </div>
 
         <TaskFilters
@@ -97,16 +86,24 @@ export default function Dashboard() {
           hasFilters={hasFilters}
         />
 
-        <TaskList
-          tasks={tasks}
-          isLoading={isLoading}
-          isError={isError}
-          onRetry={refetch}
-          hasFilters={hasFilters}
-          onClearFilters={clearFilters}
-          onEdit={openEditForm}
-          onDelete={setTaskToDelete}
-        />
+        {view === "board" && tasks && tasks.length > 0 ? (
+          <TaskBoard
+            tasks={tasks}
+            onEdit={openEditForm}
+            onDelete={setTaskToDelete}
+          />
+        ) : (
+          <TaskList
+            tasks={tasks}
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+            hasFilters={hasFilters}
+            onClearFilters={clearFilters}
+            onEdit={openEditForm}
+            onDelete={setTaskToDelete}
+          />
+        )}
       </main>
 
       <TaskFormDialog

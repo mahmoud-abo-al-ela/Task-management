@@ -6,7 +6,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getErrorMessage } from "@/lib/api";
 import { loginSchema, type LoginForm } from "@/schemas/authSchemas";
-import AuthLayout from "@/components/AuthLayout";
+import AuthLayout from "@/components/layout/AuthLayout";
 import FormField from "@/components/FormField";
 import PasswordInput from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
