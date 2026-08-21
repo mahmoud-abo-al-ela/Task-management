@@ -22,7 +22,7 @@ function sendToken(res: Response, userId: string) {
 
   res.cookie(COOKIE_NAME, createToken(userId), {
     httpOnly: true,
-    sameSite: isProduction ? "none" : "lax",
+    sameSite: "lax",
     secure: isProduction,
     maxAge: SEVEN_DAYS,
     path: "/",

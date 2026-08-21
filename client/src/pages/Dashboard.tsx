@@ -66,9 +66,14 @@ export default function Dashboard() {
   }
 
   return (
-    // In board view the page itself must not scroll — the columns do. So the
-    // shell is locked to the viewport height and the board takes what is left.
-    <div className={`flex flex-col ${isBoard ? "h-dvh" : "min-h-dvh"}`}>
+    // In board view the shell is pinned to the viewport with fixed inset-0, so
+    // it cannot contribute any height to the page at all — only the columns
+    // scroll. In list view it is a normal block that grows with its content.
+    <div
+      className={`flex flex-col ${
+        isBoard ? "fixed inset-0 overflow-hidden" : "min-h-dvh"
+      }`}
+    >
       <Navbar />
 
       <main className="mx-auto flex w-full min-h-0 max-w-5xl flex-1 flex-col px-4 py-6">
@@ -120,11 +125,10 @@ export default function Dashboard() {
               hasFilters={hasFilters}
               onClearFilters={clearFilters}
               onView={setTaskToView}
-            onEdit={openEditForm}
+              onEdit={openEditForm}
               onDelete={setTaskToDelete}
             />
 
-            {/* List view only: the board shows every column at once. */}
             {data && (
               <TaskPagination
                 page={data.page}

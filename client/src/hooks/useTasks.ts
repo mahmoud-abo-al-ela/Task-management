@@ -32,18 +32,18 @@ export interface TaskInput {
   removeAttachment?: boolean;
 }
 
-function toRequestBody(data: TaskInput) {
-  if (!data.image && !data.removeAttachment) return data;
+function toRequestBody({ image, removeAttachment, ...fields }: TaskInput) {
+  if (!image && !removeAttachment) return fields;
 
   const formData = new FormData();
-  formData.append("title", data.title);
-  formData.append("description", data.description);
-  formData.append("status", data.status);
-  formData.append("priority", data.priority);
-  formData.append("dueDate", data.dueDate ?? "");
+  formData.append("title", fields.title);
+  formData.append("description", fields.description);
+  formData.append("status", fields.status);
+  formData.append("priority", fields.priority);
+  formData.append("dueDate", fields.dueDate ?? "");
 
-  if (data.image) formData.append("image", data.image);
-  if (data.removeAttachment) formData.append("removeAttachment", "true");
+  if (image) formData.append("image", image);
+  if (removeAttachment) formData.append("removeAttachment", "true");
 
   return formData;
 }
