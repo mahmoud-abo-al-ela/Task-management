@@ -283,6 +283,5 @@ constraints are genuinely exercised. Nothing is mocked and your real database is
 
 ## Notes on development
 
-This project was built with the help of AI tooling (Claude Code) for scaffolding, code review, and
-documentation. All architectural decisions, library choices and trade-offs were reviewed and made
-deliberately, and the reasoning behind each is documented.
+This project was built with the help of AI tooling (Claude Code), code review, and
+documentation. All decisions were reviewed by me.
