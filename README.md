@@ -263,15 +263,6 @@ and — most importantly — that one user cannot read, update or delete another
 Tests run against a real MongoDB instance started in memory, so queries, indexes and unique
 constraints are genuinely exercised. Nothing is mocked and your real database is never touched.
 
-## Known issues and limitations
-
-- **The demo API sleeps when idle.** On Render's free tier the first request after a period of
-  inactivity takes up to a minute while the service restarts.
-- **Attachments are stored in MongoDB** as binary data rather than in object storage. This avoids a
-  third-party dependency, but it inflates documents and does not scale. S3 or Cloudinary would be
-  the production choice. The 2 MB limit exists partly because MongoDB caps a document at 16 MB.
-- **Drag and drop is desktop only.** On touch screens, dragging competes with scrolling, so mobile
-  uses the list view and status is changed through the edit form.
 
 ## Notes on development
 
