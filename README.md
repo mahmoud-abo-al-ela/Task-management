@@ -114,18 +114,10 @@ Generate a secret with:
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-### 3. Configure the client
+### 3. Run both apps
 
-```bash
-cd client
-cp .env.example .env
-```
-
-| Variable       | Required | Description                                           |
-| -------------- | :------: | ----------------------------------------------------- |
-| `VITE_API_URL` |    no    | API base URL. Defaults to `http://localhost:5000/api` |
-
-### 4. Run both apps
+The client needs no configuration. It always calls `/api` on its own address, and the Vite dev
+server forwards that to the API — the same thing `vercel.json` does in production.
 
 In two terminals:
 
@@ -140,8 +132,8 @@ cd client && npm run dev     # http://localhost:5173
 Open <http://localhost:5173> and register an account.
 
 > [!NOTE]
-> Both must run at once. The client is a separate app that talks to the API over HTTP, and the API
-> only accepts requests from the origin in `CLIENT_ORIGIN`.
+> Both must run at once. The client serves the pages and forwards `/api` to the server, so requests
+> fail if only one is running.
 
 ## Scripts
 
