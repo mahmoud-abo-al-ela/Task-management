@@ -71,7 +71,7 @@ export default function Register() {
         <FormField
           id="password"
           label="Password"
-          hint="At least 6 characters."
+          hint="At least 8 characters, with a letter and a number."
           error={errors.password?.message}
         >
           <PasswordInput

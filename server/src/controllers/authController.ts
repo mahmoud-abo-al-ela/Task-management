@@ -4,24 +4,33 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/User";
 import { AuthRequest } from "../middleware/auth";
 
+const COOKIE_NAME = "token";
+const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+
 function createToken(userId: string) {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET as string, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  } as jwt.SignOptions);
+  return jwt.sign(
+    { id: userId },
+    process.env.JWT_SECRET as string,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    } as jwt.SignOptions,
+  );
+}
+
+function sendToken(res: Response, userId: string) {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  res.cookie(COOKIE_NAME, createToken(userId), {
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
+    maxAge: SEVEN_DAYS,
+    path: "/",
+  });
 }
 
 export async function register(req: Request, res: Response) {
   const { name, email, password } = req.body;
-
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
-  if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ message: "Password must be at least 6 characters" });
-  }
 
   const existing = await User.findOne({ email: email.toLowerCase() });
   if (existing) {
@@ -30,34 +39,30 @@ export async function register(req: Request, res: Response) {
 
   const user = await User.create({ name, email, password });
 
+  sendToken(res, user._id.toString());
   res.status(201).json({
     user: { id: user._id, name: user.name, email: user.email },
-    token: createToken(user._id.toString()),
   });
 }
 
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
   const user = await User.findOne({ email: email.toLowerCase() });
 
-  if (!user) {
-    return res.status(404).json({ message: "No account found with this email" });
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ message: "Invalid email or password" });
   }
 
-  const isPasswordCorrect = await bcrypt.compare(password, user.password);
-  if (!isPasswordCorrect) {
-    return res.status(401).json({ message: "Incorrect password" });
-  }
-
+  sendToken(res, user._id.toString());
   res.json({
     user: { id: user._id, name: user.name, email: user.email },
-    token: createToken(user._id.toString()),
   });
+}
+
+export function logout(_req: Request, res: Response) {
+  res.clearCookie(COOKIE_NAME, { path: "/" });
+  res.json({ message: "Logged out" });
 }
 
 export async function getMe(req: AuthRequest, res: Response) {

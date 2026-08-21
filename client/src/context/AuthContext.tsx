@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import api from "../lib/api";
-import type { User } from "../types";
+import api from "@/lib/api";
+import type { User } from "@/types";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -17,34 +17,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     api
       .get("/auth/me")
       .then((res) => setUser(res.data))
-      .catch(() => localStorage.removeItem("token"))
+      .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
   async function login(email: string, password: string) {
     const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
   }
 
   async function register(name: string, email: string, password: string) {
     const res = await api.post("/auth/register", { name, email, password });
-    localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
   }
 
-  function logout() {
-    localStorage.removeItem("token");
+  async function logout() {
+    await api.post("/auth/logout");
     setUser(null);
   }
 

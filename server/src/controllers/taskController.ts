@@ -2,6 +2,7 @@ import { Response } from "express";
 import { Task } from "../models/Task";
 import { AuthRequest } from "../middleware/auth";
 
+
 export async function getTasks(req: AuthRequest, res: Response) {
   const { search, status, priority } = req.query;
 
@@ -41,10 +42,6 @@ function fileToAttachment(file: Express.Multer.File) {
 
 export async function createTask(req: AuthRequest, res: Response) {
   const { title, description, status, priority, dueDate } = req.body;
-
-  if (!title) {
-    return res.status(400).json({ message: "Title is required" });
-  }
 
   const task = await Task.create({
     title,
@@ -114,4 +111,3 @@ export async function getAttachment(req: AuthRequest, res: Response) {
   res.setHeader("Content-Type", task.attachment.contentType || "image/jpeg");
   res.send(task.attachment.data);
 }
-

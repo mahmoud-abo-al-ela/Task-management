@@ -6,14 +6,13 @@ export interface AuthRequest extends Request {
 }
 
 export function protect(req: AuthRequest, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
+  const token = req.cookies?.token;
 
-  if (!header || !header.startsWith("Bearer ")) {
+  if (!token) {
     return res.status(401).json({ message: "Not authorized" });
   }
 
   try {
-    const token = header.split(" ")[1];
     const payload = jwt.verify(token, process.env.JWT_SECRET as string) as {
       id: string;
     };

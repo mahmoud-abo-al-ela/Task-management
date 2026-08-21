@@ -27,110 +27,118 @@ afterEach(async () => {
   await Task.deleteMany({});
 });
 
-async function registerUser(email: string) {
-  const res = await request(app)
+async function signIn(email: string) {
+  const agent = request.agent(app);
+  await agent
     .post("/api/auth/register")
-    .send({ name: "Test", email, password: "123456" });
+    .send({ name: "Test", email, password: "password123" });
 
-  return res.body.token as string;
+  return agent;
 }
 
-async function createTask(token: string, data: object = {}) {
-  const res = await request(app)
+async function createTask(
+  agent: ReturnType<typeof request.agent>,
+  data: object = {},
+) {
+  const res = await agent
     .post("/api/tasks")
-    .set("Authorization", `Bearer ${token}`)
     .send({ title: "My task", ...data });
-
   return res.body;
 }
 
 describe("tasks", () => {
   it("creates a task", async () => {
-    const token = await registerUser("a@example.com");
+    const agent = await signIn("a@example.com");
 
-    const res = await request(app)
-      .post("/api/tasks")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ title: "Buy milk" });
+    const res = await agent.post("/api/tasks").send({ title: "Buy milk" });
 
     expect(res.status).toBe(201);
     expect(res.body.status).toBe("todo");
   });
 
-  it("blocks requests with no token", async () => {
+  it("rejects a task with no title", async () => {
+    const agent = await signIn("a@example.com");
+
+    const res = await agent
+      .post("/api/tasks")
+      .send({ description: "no title" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("blocks requests with no cookie", async () => {
     const res = await request(app).get("/api/tasks");
 
     expect(res.status).toBe(401);
   });
 
   it("updates a task", async () => {
-    const token = await registerUser("a@example.com");
-    const task = await createTask(token);
+    const agent = await signIn("a@example.com");
+    const task = await createTask(agent);
 
-    const res = await request(app)
+    const res = await agent
       .patch(`/api/tasks/${task._id}`)
-      .set("Authorization", `Bearer ${token}`)
       .send({ status: "done" });
 
     expect(res.body.status).toBe("done");
   });
 
   it("deletes a task", async () => {
-    const token = await registerUser("a@example.com");
-    const task = await createTask(token);
+    const agent = await signIn("a@example.com");
+    const task = await createTask(agent);
 
-    await request(app)
-      .delete(`/api/tasks/${task._id}`)
-      .set("Authorization", `Bearer ${token}`);
+    await agent.delete(`/api/tasks/${task._id}`);
 
     expect(await Task.countDocuments()).toBe(0);
   });
 
   it("searches by title and filters by status", async () => {
-    const token = await registerUser("a@example.com");
-    await createTask(token, { title: "Buy milk" });
-    await createTask(token, { title: "Walk the dog", status: "done" });
+    const agent = await signIn("a@example.com");
+    await createTask(agent, { title: "Buy milk" });
+    await createTask(agent, { title: "Walk the dog", status: "done" });
 
-    const search = await request(app)
-      .get("/api/tasks?search=MILK")
-      .set("Authorization", `Bearer ${token}`);
+    const search = await agent.get("/api/tasks?search=MILK");
+    const filter = await agent.get("/api/tasks?status=done");
 
-    const filter = await request(app)
-      .get("/api/tasks?status=done")
-      .set("Authorization", `Bearer ${token}`);
+    expect(search.body.tasks).toHaveLength(1);
+    expect(filter.body.tasks[0].title).toBe("Walk the dog");
+  });
 
-    expect(search.body).toHaveLength(1);
-    expect(filter.body[0].title).toBe("Walk the dog");
+  it("paginates the list", async () => {
+    const agent = await signIn("a@example.com");
+    for (let i = 0; i < 12; i++) {
+      await createTask(agent, { title: `Task ${i}` });
+    }
+
+    const res = await agent.get("/api/tasks?page=2&limit=10");
+
+    expect(res.body.tasks).toHaveLength(2);
+    expect(res.body.total).toBe(12);
+    expect(res.body.totalPages).toBe(2);
   });
 });
 
-// A user must never reach another user's tasks.
 describe("task ownership", () => {
   it("only lists your own tasks", async () => {
-    const tokenA = await registerUser("a@example.com");
-    const tokenB = await registerUser("b@example.com");
-    await createTask(tokenA);
+    const userA = await signIn("a@example.com");
+    const userB = await signIn("b@example.com");
+    await createTask(userA);
 
-    const res = await request(app)
-      .get("/api/tasks")
-      .set("Authorization", `Bearer ${tokenB}`);
+    const res = await userB.get("/api/tasks");
 
-    expect(res.body).toHaveLength(0);
+    expect(res.body.tasks).toHaveLength(0);
   });
 
   it("cannot update or delete someone else's task", async () => {
-    const tokenA = await registerUser("a@example.com");
-    const tokenB = await registerUser("b@example.com");
-    const task = await createTask(tokenA);
+    const userA = await signIn("a@example.com");
+    const userB = await signIn("b@example.com");
+    const task = await createTask(userA);
 
-    const update = await request(app)
+    const update = await userB
       .patch(`/api/tasks/${task._id}`)
-      .set("Authorization", `Bearer ${tokenB}`)
       .send({ title: "Hacked" });
 
-    const remove = await request(app)
-      .delete(`/api/tasks/${task._id}`)
-      .set("Authorization", `Bearer ${tokenB}`);
+    const remove = await userB.delete(`/api/tasks/${task._id}`);
 
     expect(update.status).toBe(404);
     expect(remove.status).toBe(404);
