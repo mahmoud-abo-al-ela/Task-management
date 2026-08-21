@@ -4,17 +4,19 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  getAttachment,
 } from "../controllers/taskController";
 import { protect } from "../middleware/auth";
+import { uploadImage } from "../middleware/upload";
 
 const router = Router();
 
-// Every task route needs a valid token.
 router.use(protect);
 
 router.get("/", getTasks);
-router.post("/", createTask);
-router.patch("/:id", updateTask);
+router.post("/", uploadImage, createTask);
+router.patch("/:id", uploadImage, updateTask);
 router.delete("/:id", deleteTask);
+router.get("/:id/attachment", getAttachment);
 
 export default router;

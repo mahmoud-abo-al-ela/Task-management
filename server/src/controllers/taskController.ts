@@ -30,6 +30,15 @@ export async function getTasks(req: AuthRequest, res: Response) {
   });
 }
 
+function fileToAttachment(file: Express.Multer.File) {
+  return {
+    data: file.buffer,
+    contentType: file.mimetype,
+    filename: file.originalname,
+    size: file.size,
+  };
+}
+
 export async function createTask(req: AuthRequest, res: Response) {
   const { title, description, status, priority, dueDate } = req.body;
 
@@ -42,17 +51,33 @@ export async function createTask(req: AuthRequest, res: Response) {
     description,
     status,
     priority,
-    dueDate,
+    dueDate: dueDate || null,
     owner: req.userId,
+    ...(req.file && { attachment: fileToAttachment(req.file) }),
   });
 
   res.status(201).json(task);
 }
 
 export async function updateTask(req: AuthRequest, res: Response) {
+  const { title, description, status, priority, dueDate } = req.body;
+
+  const update: any = {};
+  if (title !== undefined) update.title = title;
+  if (description !== undefined) update.description = description;
+  if (status !== undefined) update.status = status;
+  if (priority !== undefined) update.priority = priority;
+  if (dueDate !== undefined) update.dueDate = dueDate || null;
+  if (req.file) update.attachment = fileToAttachment(req.file);
+
+  const unset =
+    req.body.removeAttachment === "true" && !req.file
+      ? { attachment: 1 }
+      : undefined;
+
   const task = await Task.findOneAndUpdate(
     { _id: req.params.id, owner: req.userId },
-    req.body,
+    { $set: update, ...(unset && { $unset: unset }) },
     { returnDocument: "after", runValidators: true },
   );
 
@@ -75,3 +100,18 @@ export async function deleteTask(req: AuthRequest, res: Response) {
 
   res.json({ message: "Task deleted" });
 }
+
+export async function getAttachment(req: AuthRequest, res: Response) {
+  const task = await Task.findOne({
+    _id: req.params.id,
+    owner: req.userId,
+  }).select("+attachment.data");
+
+  if (!task?.attachment?.data) {
+    return res.status(404).json({ message: "No attachment" });
+  }
+
+  res.setHeader("Content-Type", task.attachment.contentType || "image/jpeg");
+  res.send(task.attachment.data);
+}
+

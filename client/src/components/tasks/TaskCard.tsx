@@ -1,5 +1,12 @@
 import { format } from "date-fns";
-import { Calendar, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  Eye,
+  MoreVertical,
+  Paperclip,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import type { Task } from "@/types";
 import { statusOptions, priorityOptions } from "@/lib/taskOptions";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +76,16 @@ export default function TaskCard({
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar size={12} />
                 {format(new Date(task.dueDate), "d MMM yyyy")}
+              </span>
+            )}
+
+            {task.attachment && (
+              <span
+                className="flex items-center text-muted-foreground"
+                title="Has an image"
+              >
+                <Paperclip size={12} />
+                <span className="sr-only">Has an image</span>
               </span>
             )}
           </div>

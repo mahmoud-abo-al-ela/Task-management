@@ -22,12 +22,38 @@ export function useTasks(filters: TaskFilters) {
   });
 }
 
+export interface TaskInput {
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  dueDate: string | null;
+  image?: File | null;
+  removeAttachment?: boolean;
+}
+
+function toRequestBody(data: TaskInput) {
+  if (!data.image && !data.removeAttachment) return data;
+
+  const formData = new FormData();
+  formData.append("title", data.title);
+  formData.append("description", data.description);
+  formData.append("status", data.status);
+  formData.append("priority", data.priority);
+  formData.append("dueDate", data.dueDate ?? "");
+
+  if (data.image) formData.append("image", data.image);
+  if (data.removeAttachment) formData.append("removeAttachment", "true");
+
+  return formData;
+}
+
 export function useCreateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<Task>) => {
-      const res = await api.post<Task>("/tasks", data);
+    mutationFn: async (data: TaskInput) => {
+      const res = await api.post<Task>("/tasks", toRequestBody(data));
       return res.data;
     },
     onSuccess: () => {
@@ -42,12 +68,13 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Task> }) => {
-      const res = await api.patch<Task>(`/tasks/${id}`, data);
+    mutationFn: async ({ id, data }: { id: string; data: TaskInput }) => {
+      const res = await api.patch<Task>(`/tasks/${id}`, toRequestBody(data));
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (task) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.removeQueries({ queryKey: ["attachment", task._id] });
       toast.success("Task updated");
     },
     onError: (error) => toast.error(getErrorMessage(error)),

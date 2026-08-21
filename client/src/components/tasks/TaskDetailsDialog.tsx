@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Task } from "@/types";
 import { statusOptions, priorityOptions } from "@/lib/taskOptions";
+import TaskAttachment from "./TaskAttachment";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +69,7 @@ export default function TaskDetailsDialog({
                   </dd>
                 </div>
               </dl>
+              <TaskAttachment task={task} />
             </div>
 
             <DialogFooter>

@@ -22,4 +22,9 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string | null;
   createdAt: string;
+  attachment?: {
+    contentType: string;
+    filename: string;
+    size: number;
+  };
 }

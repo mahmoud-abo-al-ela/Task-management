@@ -34,6 +34,12 @@ const taskSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    attachment: {
+      data: { type: Buffer, select: false },
+      contentType: String,
+      filename: String,
+      size: Number,
+    },
   },
   { timestamps: true },
 );

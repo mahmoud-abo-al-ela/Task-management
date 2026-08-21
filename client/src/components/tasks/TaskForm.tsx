@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -12,6 +12,7 @@ import type { Task } from "@/types";
 import FormField from "@/components/FormField";
 import SelectField from "./SelectField";
 import DateField from "./DateField";
+import AttachmentField from "./AttachmentField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,6 +46,9 @@ export default function TaskForm({
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
 
+  const [file, setFile] = useState<File | null>(null);
+  const [removeExisting, setRemoveExisting] = useState(false);
+
   const {
     register,
     control,
@@ -58,10 +62,17 @@ export default function TaskForm({
 
   useEffect(() => {
     reset(task ? toFormValues(task) : emptyTask);
+    setFile(null);
+    setRemoveExisting(false);
   }, [task, reset]);
 
   async function onSubmit(values: TaskFormValues) {
-    const data = { ...values, dueDate: values.dueDate || null };
+    const data = {
+      ...values,
+      dueDate: values.dueDate || null,
+      image: file,
+      removeAttachment: removeExisting && !file,
+    };
 
     if (task) {
       await updateTask.mutateAsync({ id: task._id, data });
@@ -112,6 +123,14 @@ export default function TaskForm({
       </div>
 
       <DateField control={control} />
+
+      <AttachmentField
+        task={task}
+        file={file}
+        onFileChange={setFile}
+        removeExisting={removeExisting}
+        onRemoveExisting={() => setRemoveExisting(true)}
+      />
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
