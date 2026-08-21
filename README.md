@@ -258,25 +258,6 @@ The two apps are deployed separately, with the database on MongoDB Atlas.
 | Client   | Vercel        | Root directory `client`, Vite preset                                                      |
 | Database | MongoDB Atlas | Network access opens `0.0.0.0/0`, since Render's outbound IPs are not fixed               |
 
-Two details are worth knowing if you redeploy this yourself:
-
-**Build tools must be installed explicitly.** `NODE_ENV=production` makes npm skip
-`devDependencies`, which is where TypeScript lives — so the build fails with
-`Cannot find type definition file for 'node'`. Hence `npm ci --include=dev` rather than
-`npm install`. The variable still has to be set, because the session cookie uses it to decide
-whether to send `Secure`.
-
-**The API is proxied through the frontend domain.** `client/vercel.json` rewrites `/api/*` to the
-Render service, so the browser sees one origin and the auth cookie is first-party. Without it the
-cookie is third-party, and browsers that block those by default — Safari and Brave among them —
-drop it, so login silently fails. The same file rewrites every other path to `index.html`, so
-refreshing on a route like `/login` does not return a 404.
-
-That proxy also buys the CSRF protection: because the API is same-site, the cookie can use
-`SameSite=Lax`, which stops the browser attaching it to requests started by another site. Calling
-the API on its own domain instead would require `SameSite=None`, which sends the cookie
-cross-site and would need a CSRF token to compensate.
-
 ## Testing
 
 ```bash
@@ -290,9 +271,6 @@ and — most importantly — that one user cannot read, update or delete another
 Tests run against a real MongoDB instance started in memory, so queries, indexes and unique
 constraints are genuinely exercised. Nothing is mocked and your real database is never touched.
 
-> [!NOTE]
-> The first run downloads a MongoDB binary and takes a couple of minutes. Later runs are fast.
-
 ## Known issues and limitations
 
 - **The demo API sleeps when idle.** On Render's free tier the first request after a period of
@@ -300,8 +278,6 @@ constraints are genuinely exercised. Nothing is mocked and your real database is
 - **Attachments are stored in MongoDB** as binary data rather than in object storage. This avoids a
   third-party dependency, but it inflates documents and does not scale. S3 or Cloudinary would be
   the production choice. The 2 MB limit exists partly because MongoDB caps a document at 16 MB.
-- **Validation rules are duplicated** between the client and server schemas. A shared package would
-  remove the risk of them drifting apart.
 - **Drag and drop is desktop only.** On touch screens, dragging competes with scrolling, so mobile
   uses the list view and status is changed through the edit form.
 
