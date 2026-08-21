@@ -1,4 +1,5 @@
 import { Search, X } from "lucide-react";
+import { statusOptions, priorityOptions } from "@/lib/taskOptions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,6 +12,20 @@ import {
 
 function toFilterValue(value: string | null) {
   return !value || value === "all" ? "" : value;
+}
+
+const statusFilterOptions = [
+  { value: "all", label: "All statuses" },
+  ...statusOptions,
+];
+
+const priorityFilterOptions = [
+  { value: "all", label: "All priorities" },
+  ...priorityOptions,
+];
+
+function labelFor(options: { value: string; label: string }[], value: string) {
+  return options.find((option) => option.value === value)?.label ?? value;
 }
 
 interface TaskFiltersProps {
@@ -59,13 +74,16 @@ export default function TaskFilters({
             className="flex-1 sm:w-36"
             aria-label="Filter by status"
           >
-            <SelectValue />
+            <SelectValue>
+              {(value) => labelFor(statusFilterOptions, value as string)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="todo">To Do</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="done">Done</SelectItem>
+            {statusFilterOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -77,13 +95,16 @@ export default function TaskFilters({
             className="flex-1 sm:w-36"
             aria-label="Filter by priority"
           >
-            <SelectValue />
+            <SelectValue>
+              {(value) => labelFor(priorityFilterOptions, value as string)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All priorities</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
+            {priorityFilterOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

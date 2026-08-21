@@ -4,10 +4,12 @@ import TaskCard from "./TaskCard";
 
 export default function DraggableTaskCard({
   task,
+  onView,
   onEdit,
   onDelete,
 }: {
   task: Task;
+  onView: (task: Task) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
 }) {
@@ -24,7 +26,12 @@ export default function DraggableTaskCard({
         isDragging ? "opacity-40" : ""
       }`}
     >
-      <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} />
+      <TaskCard
+        task={task}
+        onView={onView}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
     </div>
   );
 }

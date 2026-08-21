@@ -9,6 +9,8 @@ import TaskBoard from "@/components/tasks/TaskBoard";
 import ViewToggle, { type TaskView } from "@/components/tasks/ViewToggle";
 import TaskFormDialog from "@/components/tasks/TaskFormDialog";
 import DeleteTaskDialog from "@/components/tasks/DeleteTaskDialog";
+import TaskDetailsDialog from "@/components/tasks/TaskDetailsDialog";
+import TaskPagination from "@/components/tasks/TaskPagination";
 import { Button } from "@/components/ui/button";
 import type { Task } from "@/types";
 
@@ -16,6 +18,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
+  const [page, setPage] = useState(1);
 
   const [debouncedSearch] = useDebounce(search, 300);
 
@@ -24,20 +27,32 @@ export default function Dashboard() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [taskToView, setTaskToView] = useState<Task | null>(null);
 
-  const {
-    data: tasks,
-    isLoading,
-    isError,
-    refetch,
-  } = useTasks({ search: debouncedSearch, status, priority });
+  const isBoard = view === "board";
+
+  const { data, isLoading, isError, refetch } = useTasks({
+    search: debouncedSearch,
+    status,
+    priority,
+    page: isBoard ? 1 : page,
+    limit: isBoard ? 50 : 10,
+  });
 
   const hasFilters = Boolean(search || status || priority);
+
+  function changeFilter(setValue: (value: string) => void) {
+    return (value: string) => {
+      setValue(value);
+      setPage(1);
+    };
+  }
 
   function clearFilters() {
     setSearch("");
     setStatus("");
     setPriority("");
+    setPage(1);
   }
 
   function openCreateForm() {
@@ -51,10 +66,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-dvh">
+    // In board view the page itself must not scroll — the columns do. So the
+    // shell is locked to the viewport height and the board takes what is left.
+    <div className={`flex flex-col ${isBoard ? "h-dvh" : "min-h-dvh"}`}>
       <Navbar />
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto flex w-full min-h-0 max-w-5xl flex-1 flex-col px-4 py-6">
         <div className="mb-5 flex items-end justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
@@ -79,30 +96,43 @@ export default function Dashboard() {
           search={search}
           status={status}
           priority={priority}
-          onSearchChange={setSearch}
-          onStatusChange={setStatus}
-          onPriorityChange={setPriority}
+          onSearchChange={changeFilter(setSearch)}
+          onStatusChange={changeFilter(setStatus)}
+          onPriorityChange={changeFilter(setPriority)}
           onClear={clearFilters}
           hasFilters={hasFilters}
         />
 
-        {view === "board" && tasks && tasks.length > 0 ? (
+        {isBoard && data && data.tasks.length > 0 ? (
           <TaskBoard
-            tasks={tasks}
+            tasks={data.tasks}
+            onView={setTaskToView}
             onEdit={openEditForm}
             onDelete={setTaskToDelete}
           />
         ) : (
-          <TaskList
-            tasks={tasks}
-            isLoading={isLoading}
-            isError={isError}
-            onRetry={refetch}
-            hasFilters={hasFilters}
-            onClearFilters={clearFilters}
+          <>
+            <TaskList
+              tasks={data?.tasks}
+              isLoading={isLoading}
+              isError={isError}
+              onRetry={refetch}
+              hasFilters={hasFilters}
+              onClearFilters={clearFilters}
+              onView={setTaskToView}
             onEdit={openEditForm}
-            onDelete={setTaskToDelete}
-          />
+              onDelete={setTaskToDelete}
+            />
+
+            {/* List view only: the board shows every column at once. */}
+            {data && (
+              <TaskPagination
+                page={data.page}
+                totalPages={data.totalPages}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         )}
       </main>
 
@@ -115,6 +145,13 @@ export default function Dashboard() {
       <DeleteTaskDialog
         task={taskToDelete}
         onClose={() => setTaskToDelete(null)}
+      />
+
+      <TaskDetailsDialog
+        task={taskToView}
+        onClose={() => setTaskToView(null)}
+        onEdit={openEditForm}
+        onDelete={setTaskToDelete}
       />
     </div>
   );

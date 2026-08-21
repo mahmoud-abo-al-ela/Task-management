@@ -8,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Just the dialog shell. The fields and submitting live in TaskForm.
 export default function TaskFormDialog({
   open,
   onOpenChange,

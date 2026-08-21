@@ -7,6 +7,13 @@ export interface User {
   email: string;
 }
 
+export interface TasksResponse {
+  tasks: Task[];
+  page: number;
+  totalPages: number;
+  total: number;
+}
+
 export interface Task {
   _id: string;
   title: string;

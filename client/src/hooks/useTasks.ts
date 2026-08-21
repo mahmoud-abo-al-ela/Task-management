@@ -1,21 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api, { getErrorMessage } from "@/lib/api";
-import type { Task, TaskStatus } from "@/types";
+import type { Task, TasksResponse, TaskStatus } from "@/types";
 
 export interface TaskFilters {
   search: string;
   status: string;
   priority: string;
+  page: number;
+  limit: number;
 }
 
 export function useTasks(filters: TaskFilters) {
   return useQuery({
     queryKey: ["tasks", filters],
     queryFn: async () => {
-      const res = await api.get<Task[]>("/tasks", { params: filters });
+      const res = await api.get<TasksResponse>("/tasks", { params: filters });
       return res.data;
     },
+    placeholderData: (previous) => previous,
   });
 }
 
@@ -61,12 +64,19 @@ export function useMoveTask() {
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ["tasks"] });
 
-      const previous = queryClient.getQueriesData<Task[]>({
+      const previous = queryClient.getQueriesData<TasksResponse>({
         queryKey: ["tasks"],
       });
 
-      queryClient.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (tasks) =>
-        tasks?.map((task) => (task._id === id ? { ...task, status } : task)),
+      queryClient.setQueriesData<TasksResponse>(
+        { queryKey: ["tasks"] },
+        (data) =>
+          data && {
+            ...data,
+            tasks: data.tasks.map((task) =>
+              task._id === id ? { ...task, status } : task,
+            ),
+          },
       );
 
       return { previous };

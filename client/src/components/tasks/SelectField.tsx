@@ -28,7 +28,12 @@ export default function SelectField({
         <FormField id={name} label={label}>
           <Select value={field.value} onValueChange={field.onChange}>
             <SelectTrigger id={name} className="w-full">
-              <SelectValue />
+              <SelectValue>
+                {(value) =>
+                  options.find((option) => option.value === value)?.label ??
+                  (value as string)
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {options.map((option) => (

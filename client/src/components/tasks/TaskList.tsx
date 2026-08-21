@@ -13,6 +13,7 @@ interface TaskListProps {
   onRetry: () => void;
   hasFilters: boolean;
   onClearFilters: () => void;
+  onView: (task: Task) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
 }
@@ -24,6 +25,7 @@ export default function TaskList({
   onRetry,
   hasFilters,
   onClearFilters,
+  onView,
   onEdit,
   onDelete,
 }: TaskListProps) {
@@ -78,6 +80,7 @@ export default function TaskList({
         <TaskCard
           key={task._id}
           task={task}
+          onView={onView}
           onEdit={onEdit}
           onDelete={onDelete}
         />

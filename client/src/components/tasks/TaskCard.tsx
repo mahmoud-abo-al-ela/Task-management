@@ -1,21 +1,16 @@
 import { format } from "date-fns";
-import { Calendar, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import type { Task } from "@/types";
+import { statusOptions, priorityOptions } from "@/lib/taskOptions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-const statusLabels: Record<Task["status"], string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  done: "Done",
-};
-
-const priorityLabels: Record<Task["priority"], string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-};
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const priorityStyles: Record<Task["priority"], string> = {
   low: "bg-slate-100 text-slate-700",
@@ -23,12 +18,18 @@ const priorityStyles: Record<Task["priority"], string> = {
   high: "bg-red-100 text-red-800",
 };
 
+function labelFor(options: { value: string; label: string }[], value: string) {
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
 export default function TaskCard({
   task,
+  onView,
   onEdit,
   onDelete,
 }: {
   task: Task;
+  onView: (task: Task) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
 }) {
@@ -36,24 +37,32 @@ export default function TaskCard({
 
   return (
     <Card>
-      <CardContent className="flex items-start justify-between gap-4 p-4">
-        <div className="min-w-0 space-y-2">
+      <CardContent className="flex items-start justify-between gap-2 px-1">
+        <div className="min-w-0 flex-1">
           <h3
-            className={`wrap-break-word font-medium ${isDone ? "text-muted-foreground line-through" : ""}`}
+            className={`capitalize line-clamp-1 wrap-break-word font-medium ml-1 ${
+              isDone ? "text-muted-foreground line-through" : ""
+            }`}
+            title={task.title}
           >
             {task.title}
           </h3>
+          <p
+            className={`mt-1 line-clamp-1 h-5 text-sm wrap-break-word ml-1 ${
+              task.description
+                ? "text-muted-foreground"
+                : "text-muted-foreground/60 italic"
+            }`}
+          >
+            {task.description || "No description"}
+          </p>
 
-          {task.description && (
-            <p className="line-clamp-2 text-sm wrap-break-word text-muted-foreground">
-              {task.description}
-            </p>
-          )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{statusLabels[task.status]}</Badge>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">
+              {labelFor(statusOptions, task.status)}
+            </Badge>
             <Badge className={priorityStyles[task.priority]}>
-              {priorityLabels[task.priority]}
+              {labelFor(priorityOptions, task.priority)}
             </Badge>
 
             {task.dueDate && (
@@ -65,24 +74,37 @@ export default function TaskCard({
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Edit task"
-            onClick={() => onEdit(task)}
-          >
-            <Pencil size={16} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Delete task"
-            onClick={() => onDelete(task)}
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Task actions"
+                className="-mt-1 -mr-2 shrink-0"
+              >
+                <MoreVertical size={16} />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onView(task)}>
+              <Eye size={16} />
+              View details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(task)}>
+              <Pencil size={16} />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => onDelete(task)}
+            >
+              <Trash2 size={16} />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardContent>
     </Card>
   );

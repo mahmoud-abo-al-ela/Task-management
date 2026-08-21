@@ -21,7 +21,7 @@ const emptyTask: TaskFormValues = {
   title: "",
   description: "",
   status: "todo",
-  priority: "medium",
+  priority: "low",
   dueDate: "",
 };
 

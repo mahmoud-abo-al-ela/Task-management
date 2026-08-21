@@ -6,12 +6,14 @@ export default function BoardColumn({
   id,
   label,
   tasks,
+  onView,
   onEdit,
   onDelete,
 }: {
   id: TaskStatus;
   label: string;
   tasks: Task[];
+  onView: (task: Task) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
 }) {
@@ -20,21 +22,22 @@ export default function BoardColumn({
   return (
     <section
       ref={setNodeRef}
-      className={`rounded-xl border p-3 transition-colors ${
+      className={`flex min-h-0 flex-col rounded-xl border p-3 transition-colors ${
         isOver ? "border-primary bg-accent" : "bg-muted/40"
       }`}
     >
-      <h2 className="mb-3 flex items-center justify-between text-sm font-medium">
+      <h2 className="mb-3 flex shrink-0 items-center justify-between text-sm font-medium">
         {label}
         <span className="text-muted-foreground">{tasks.length}</span>
       </h2>
 
-      <div className="space-y-3">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
         {tasks.map((task) => (
           <DraggableTaskCard
             key={task._id}
             task={task}
-            onEdit={onEdit}
+            onView={onView}
+          onEdit={onEdit}
             onDelete={onDelete}
           />
         ))}

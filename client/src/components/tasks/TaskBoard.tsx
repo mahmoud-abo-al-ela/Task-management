@@ -16,10 +16,12 @@ import TaskCard from "./TaskCard";
 
 export default function TaskBoard({
   tasks,
+  onView,
   onEdit,
   onDelete,
 }: {
   tasks: Task[];
+  onView: (task: Task) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
 }) {
@@ -53,14 +55,15 @@ export default function TaskBoard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-3">
         {statusOptions.map((column) => (
           <BoardColumn
             key={column.value}
             id={column.value as TaskStatus}
             label={column.label}
             tasks={tasks.filter((task) => task.status === column.value)}
-            onEdit={onEdit}
+            onView={onView}
+          onEdit={onEdit}
             onDelete={onDelete}
           />
         ))}
@@ -69,7 +72,12 @@ export default function TaskBoard({
       <DragOverlay dropAnimation={null}>
         {draggedTask && (
           <div className="rotate-2 opacity-90">
-            <TaskCard task={draggedTask} onEdit={onEdit} onDelete={onDelete} />
+            <TaskCard
+              task={draggedTask}
+              onView={onView}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           </div>
         )}
       </DragOverlay>

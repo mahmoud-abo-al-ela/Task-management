@@ -11,9 +11,23 @@ export async function getTasks(req: AuthRequest, res: Response) {
   if (status) filter.status = status;
   if (priority) filter.priority = priority;
 
-  const tasks = await Task.find(filter).sort({ createdAt: -1 });
+  const page = Number(req.query.page) || 1;
+  const limit = Math.min(Number(req.query.limit) || 10, 50);
 
-  res.json(tasks);
+  const [tasks, total] = await Promise.all([
+    Task.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    Task.countDocuments(filter),
+  ]);
+
+  res.json({
+    tasks,
+    page,
+    totalPages: Math.ceil(total / limit) || 1,
+    total,
+  });
 }
 
 export async function createTask(req: AuthRequest, res: Response) {
